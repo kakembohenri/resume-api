@@ -26,6 +26,10 @@ Route::controller(AuthController::class)->group(function () {
     Route::post("/login", "Login");
     // Logout
     Route::post("/logout", "Logout");
+    // Forgot password
+    Route::post("/passwords/forgot", "ForgotPassword");
+    // Forgot password
+    Route::put("/passwords/reset", "ResetPassword");
 });
 
 /** USER CONTROLLER
