@@ -40,7 +40,7 @@ Route::controller(UserController::class)->group(function () {
     // Create account
     Route::post("/users", "Create");
     // Verify Users
-    Route::put("/users/verify-account/{email}/{token}", "VerifyAccount");
+    Route::put("/users/verify-account", "VerifyAccount");
 });
 
 /** RESUME CONTROLLER

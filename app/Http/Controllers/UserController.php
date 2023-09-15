@@ -73,7 +73,7 @@ class UserController extends Controller
             }
 
             DB::commit();
-            return ReturnBase::JustMessage('A email verification token has been sent tou your address', Response::HTTP_OK);
+            return ReturnBase::JustMessage('A email verification token has been sent to your address', Response::HTTP_OK);
         } catch (\Exception $exp) {
             DB::rollBack();
             return ReturnBase::InternalServerError($exp);
@@ -93,11 +93,20 @@ class UserController extends Controller
      * 
      */
 
-    public function VerifyAccount($Email, $token)
+    public function VerifyAccount(Request $request)
     {
         try {
 
-            $user = User::where('Email', $Email)->first();
+            $validator = Validator::make($request->all(), [
+                'Email' => 'required|email|exists:users,Email',
+                'Token' => 'required|string'
+            ]);
+
+            if ($validator->fails()) {
+                return ReturnBase::HandleValidationErrors($validator);
+            }
+
+            $user = User::where('Email', $request->Email)->first();
 
             if ($user == null) {
                 return ReturnBase::Error('User Does Not Exist!', 400);
@@ -107,8 +116,8 @@ class UserController extends Controller
 
             // Check if email and token combo exist
             $verificationRecord = EmailVerificationToken::where([
-                ['Email', $Email],
-                ['Token', $token]
+                ['Email', $request->Email],
+                ['Token', $request->Token]
             ])->first();
 
             if ($verificationRecord == null) {
@@ -124,20 +133,13 @@ class UserController extends Controller
 
             // Remove record from verification token table
             EmailVerificationToken::where([
-                ['Email', $Email],
-                ['Token', $token]
+                ['Email', $request->Email],
+                ['Token', $request->Token]
             ])->delete();
-
-            // Generate jwt token
-            $token = auth()->claims(['isGuest' => false])->login($user);
-
-            unset($user['Password']);
 
             DB::commit();
 
-            return ReturnBase::Object('Email Account Has Been Verified', (object)[
-                'token' => $token,
-            ], 200);
+            return ReturnBase::JustMessage('Email Account Has Been Verified', 200);
         } catch (\Exception $exp) {
             // Log::error($exp->getMessage());
             return ReturnBase::InternalServerError($exp);
