@@ -7,7 +7,7 @@
     <title>Resume Builder</title>
 </head>
 <body style="font-family: sans-serif">
-    <p>Dear {{ $mailData['name'] }},</p>
+    <p>Dear Distiguished User,</p>
     <p style="margin: 1rem 0;">Thank you for choosing Resume Builder. To ensure the security of your account and maintain the quality of our services, we require you to complete your account verification.</p>
     <p style="margin: 1rem 0;"> Click on the button below to verify your email address and complete your account setup.</p>
     <a href={{env('BASE_API').'#/verify/'.$mailData['email'].'/'.$mailData['token']}} target="_blank" style="text-decoration: none;
