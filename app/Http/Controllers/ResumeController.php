@@ -600,21 +600,25 @@ class ResumeController extends Controller
                     ]);
                     // Update work history
                 } else {
-                    if ($work['IsDeleted']) {
-                        WorkHistory::where('Id', $work['Id'])->update([
-                            'Company' => $work['Company'],
-                            'Position' => $work['Position'],
-                            'Role' => $work['Role'],
-                            'StartDate' => $work['StartDate'],
-                            'EndDate' => $work['EndDate'],
-                            'Modified_By' =>  $request['Modified_By'],
-                            'ModifiedAt' => $request['ModifiedAt']
-                        ]);
-                    } else {
-                        WorkHistory::where('Id', $work['Id'])->delete();
+                    if (isset($work['IsDeleted'])) {
+                        if (!$work['IsDeleted']) {
+                            WorkHistory::where('Id', $work['Id'])->update([
+                                'Company' => $work['Company'],
+                                'Position' => $work['Position'],
+                                'Role' => $work['Role'],
+                                'StartDate' => $work['StartDate'],
+                                'EndDate' => $work['EndDate'],
+                                'Modified_By' =>  $request['Modified_By'],
+                                'ModifiedAt' => $request['ModifiedAt']
+                            ]);
+                        } else {
+                            WorkHistory::where('Id', $work['Id'])->delete();
+                        }
                     }
                 }
             }
+
+            Log::info($request['skills']);
 
             // Create Skills
             foreach ($request['skills'] as $skill) {
@@ -657,7 +661,7 @@ class ResumeController extends Controller
                     ]);
                 } else {
                     if (isset($language['IsDeleted'])) {
-                        if ($language['IsDeleted']) {
+                        if (!$language['IsDeleted']) {
                             Language::where('Id', $language['Id'])->update([
                                 'Name' => $language['Name'],
                                 'Level' => $language['Level'],
