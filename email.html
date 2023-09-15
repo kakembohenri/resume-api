@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resume Builder</title>
+    <title>Document</title>
 </head>
 <body style="font-family: sans-serif">
-    <p>Dear {{ $mailData['name'] }},</p>
+    <p>Dear James</p>
     <p style="margin: 1rem 0;">Thank you for choosing Resume Builder. To ensure the security of your account and maintain the quality of our services, we require you to complete your account verification.</p>
     <p style="margin: 1rem 0;"> Click on the button below to verify your email address and complete your account setup.</p>
-    <a href={{'http://livecvtest.com/#/verify/'.$mailData['email'].'/'.$mailData['token']}} target="_blank" style="text-decoration: none;
+    <a href="#" target="_blank" style="text-decoration: none;
     color: #000000ad;
     padding: 1rem 0.5rem;
     background: yellow;">Verify My Account
@@ -23,10 +23,5 @@
     </p>
     <p style="margin: 2rem 0;">Best Regards,</p>
     <p style="margin: 1rem 0;">The Resume Builder Team</p>
-
-    {{-- <p>Click on the link below to verify your account</p>
-    <a href={{'http://localhost:5173/#/verify/'.$mailData['email'].'/'.$mailData['token']}} target="_blank">{{'http://localhost:5173/#/verify/'.$mailData['email'].'/'.$mailData['token']}}
-    </a> --}}
 </body>
 </html>
-

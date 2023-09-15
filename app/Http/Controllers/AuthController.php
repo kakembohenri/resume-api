@@ -30,10 +30,6 @@ class AuthController extends Controller
                 [
                     'Email' => 'required|email',
                     'Password' => 'required|string'
-                ],
-                [
-                    'Email' => 'Email field is required!',
-                    'Password' => 'Password field is required!'
                 ]
             );
 

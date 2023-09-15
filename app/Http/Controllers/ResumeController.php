@@ -287,6 +287,35 @@ class ResumeController extends Controller
                 return ReturnBase::JustMessage('You do not have a resume. Please create one', 200);
             }
             $resume['Avatar'] = $this->RetrieveFile($resume->AvatarPath);
+
+            $work_histories = [];
+            foreach ($resume->work_history as $work_history) {
+                $work_history['IsDeleted'] = false;
+                array_push($work_histories, $work_history);
+            }
+
+            $institutions = [];
+
+            foreach ($resume->education as $institution) {
+                $institution['IsDeleted'] = false;
+                array_push($institutions, $institution);
+            }
+
+            $skills = [];
+
+            foreach ($resume->skills as $skill) {
+                $skill['IsDeleted'] = false;
+                array_push($skills, $skill);
+            }
+
+            $languages = [];
+
+            foreach ($resume->languages as $language) {
+                $language['IsDeleted'] = false;
+                array_push($languages, $language);
+            }
+
+
             $result = [
                 'personal_details' => [
                     'Avatar' => $resume['Avatar'],
@@ -297,17 +326,18 @@ class ResumeController extends Controller
                     "Gender" => $resume['Gender'],
                     "Nationality" => $resume['Nationality'],
                     "Bio" => $resume['Bio'],
-                    "Headline" => $resume['Headline']
+                    "Headline" => $resume['Headline'],
+                    "AccessCode" => $resume['RefererCode']
                 ],
                 'address' => [
                     "CountryOfResidence" => $resume['CountryOfResidence'],
                     "City" => $resume['City'],
                     "PostalCode" => $resume['PostalCode']
                 ],
-                'education' => $resume->education,
-                'work_history' => $resume->work_history,
-                'languages' => $resume->languages,
-                'skills' => $resume->skills,
+                'education' => $institutions,
+                'work_history' => $work_histories,
+                'languages' => $languages,
+                'skills' => $skills,
                 'contacts' => $resume->contacts,
                 'contacts_email' =>  auth()->user()->Email,
             ];
@@ -412,6 +442,254 @@ class ResumeController extends Controller
                 ],
                 200
             );
+        } catch (\Exception $exp) {
+            DB::rollBack();
+            return ReturnBase::InternalServerError($exp);
+        }
+    }
+
+    /** UPDATE RESUME
+     * DESCRIPTION: Handle updating a resume
+     * ENDPOINT: /resumes
+     * METHOD: PUT
+     * TODO
+     * - update resume
+     * 
+     */
+
+    public function Update(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                // Personal details
+                "personal_details" => "required|array",
+                "personal_details.Avatar" => "required|string",
+                "personal_details.FirstName" => "required|string",
+                "personal_details.MiddleName" => "sometimes|nullable|string",
+                "personal_details.LastName" => "required|string",
+                "personal_details.DateOfBirth" => "required|string",
+                "personal_details.Nationality" => "required|string",
+                "personal_details.Gender" => "required|string",
+                "personal_details.Bio" => "required|string",
+                "personal_details.Headline" => "required|string",
+                // Address
+                "address" => "required|array",
+                "address.CountryOfResidence" => "required|string",
+                "address.City" => "required|string",
+                "address.PostalCode" => "sometimes|nullable|string",
+
+                // Education
+                "education" => "required|array",
+                "education.*.Institution" => "required|string",
+                "education.*.Location" => "required|string",
+                "education.*.Achievements" => "required|string",
+                "education.*.StartDate" => "required|string",
+                "education.*.EndDate" => "sometimes|nullable|string",
+
+                // Work history
+                "work_history" => "required|array",
+                "work_history.*.Company" => "required|string",
+                "work_history.*.Position" => "required|string",
+                "work_history.*.Role" => "required|string",
+                "work_history.*.StartDate" => "required|string",
+                "work_history.*.EndDate" => "sometimes|nullable|string",
+
+                // Skills
+                "skills" => "required|array",
+                "skills.*.Name" => "required|string",
+                "skills.*.Description" => "required|string",
+                "skills.*.Level" => "required|string",
+
+                // Languages
+                "languages" => "required|array",
+                "languages.*.Name" => "required|string",
+                "languages.*.Level" => "required|string",
+
+                // Contacts
+                "contact" => "required|array",
+                "contact.Phone" => "required|string",
+                "contact.Website" => "sometimes|nullable|string",
+                "contact.Twitter" => "sometimes|nullable|string",
+                "contact.Facebook" => "sometimes|nullable|string",
+                "contact.Instagram" => "sometimes|nullable|string",
+                "contact.LinkedIn" => "sometimes|nullable|string",
+            ]);
+
+            if ($validator->fails()) {
+                return ReturnBase::HandleValidationErrors($validator);
+            }
+            $request['Modified_By'] = auth()->user()->Id;
+            $request['ModifiedAt'] = date('Y:m:d H:i:s', time());
+
+            $name = $request['personal_details']['FirstName'] . $request['personal_details']['MiddleName'] . $request['personal_details']['LastName'];
+
+            $avatarPath = $this->HandleFileUpload($request['personal_details']['Avatar'], $name);
+
+            if ($avatarPath == "fail") {
+                return ReturnBase::Error('Wrong file extension. Must be jpeg, png or jpg', Response::HTTP_BAD_REQUEST);
+            }
+
+            DB::beginTransaction();
+
+            Resume::where('User_Id', auth()->user()->Id)->update([
+                'AvatarPath' => $avatarPath,
+                'FirstName' => $request['personal_details']['FirstName'],
+                'MiddleName' => $request['personal_details']['MiddleName'],
+                'LastName' => $request['personal_details']['LastName'],
+                'Headline' => $request['personal_details']['Headline'],
+                'DateOfBirth' => $request['personal_details']['DateOfBirth'],
+                'Nationality' => $request['personal_details']['Nationality'],
+                'Gender' => $request['personal_details']['Gender'],
+                'Bio' => $request['personal_details']['Bio'],
+                'CountryOfResidence' => $request['address']['CountryOfResidence'],
+                'City' => $request['address']['City'],
+                'PostalCode' => $request['address']['PostalCode'],
+                'Modified_By' =>  $request['Modified_By'],
+                'ModifiedAt' => $request['ModifiedAt']
+            ]);
+
+            $resume = Resume::where('User_Id', auth()->user()->Id)->first();
+
+            // Create resume education records
+            foreach ($request['education'] as $edu) {
+                // if edu has no Id create it
+                if (!isset($edu['Id'])) {
+                    EducationHistory::create([
+                        'Resume_Id' => $resume['Id'],
+                        'Institution' => $edu['Institution'],
+                        'Location' => $edu['Location'],
+                        'Achievements' => $edu['Achievements'],
+                        'StartDate' => $edu['StartDate'],
+                        'EndDate' => $edu['EndDate'],
+                        'Created_By' =>  $request['Modified_By'],
+                        'CreatedAt' => $request['ModifiedAt']
+                    ]);
+                    // Update education
+                } else {
+                    if (isset($edu['IsDeleted'])) {
+                        if (!$edu['IsDeleted']) {
+                            EducationHistory::where('Id', $edu['Id'])->update([
+                                'Institution' => $edu['Institution'],
+                                'Location' => $edu['Location'],
+                                'Achievements' => $edu['Achievements'],
+                                'StartDate' => $edu['StartDate'],
+                                'EndDate' => $edu['EndDate'],
+                                'Modified_By' =>  $request['Modified_By'],
+                                'ModifiedAt' => $request['ModifiedAt']
+                            ]);
+                        } else {
+                            EducationHistory::where('Id', $edu['Id'])->delete();
+                        }
+                    }
+                }
+            }
+
+            // Create work history
+            foreach ($request['work_history'] as $work) {
+                // if work has no Id create it
+                if (!isset($work['Id'])) {
+                    WorkHistory::create([
+                        'Resume_Id' => $resume['Id'],
+                        'Company' => $work['Company'],
+                        'Position' => $work['Position'],
+                        'Role' => $work['Role'],
+                        'StartDate' => $work['StartDate'],
+                        'EndDate' => $work['EndDate'],
+                        'Created_By' =>  $request['Modified_By'],
+                        'CreatedAt' => $request['ModifiedAt']
+                    ]);
+                    // Update work history
+                } else {
+                    if ($work['IsDeleted']) {
+                        WorkHistory::where('Id', $work['Id'])->update([
+                            'Company' => $work['Company'],
+                            'Position' => $work['Position'],
+                            'Role' => $work['Role'],
+                            'StartDate' => $work['StartDate'],
+                            'EndDate' => $work['EndDate'],
+                            'Modified_By' =>  $request['Modified_By'],
+                            'ModifiedAt' => $request['ModifiedAt']
+                        ]);
+                    } else {
+                        WorkHistory::where('Id', $work['Id'])->delete();
+                    }
+                }
+            }
+
+            // Create Skills
+            foreach ($request['skills'] as $skill) {
+                // if skill has no Id create it
+                if (!isset($skill['Id'])) {
+                    Skills::create([
+                        'Resume_Id' => $resume['Id'],
+                        'Name' => $skill['Name'],
+                        'Description' => $skill['Description'],
+                        'Level' => $skill['Level'],
+                        'Created_By' =>  $request['Modified_By'],
+                        'CreatedAt' => $request['ModifiedAt']
+                    ]);
+                } else {
+                    if (isset($skill['IsDeleted'])) {
+                        if (!$skill['IsDeleted']) {
+                            Skills::where('Id', $skill['Id'])->update([
+                                'Name' => $skill['Name'],
+                                'Description' => $skill['Description'],
+                                'Level' => $skill['Level'],
+                                'Modified_By' =>  $request['Modified_By'],
+                                'ModifiedAt' => $request['ModifiedAt']
+                            ]);
+                        } else {
+                            Skills::where('Id', $skill['Id'])->delete();
+                        }
+                    }
+                }
+            }
+
+            // Create languages
+            foreach ($request['languages'] as $language) {
+                if (!isset($language['Id'])) {
+                    Language::create([
+                        'Resume_Id' => $resume['Id'],
+                        'Name' => $language['Name'],
+                        'Level' => $language['Level'],
+                        'Created_By' =>  $request['Modified_By'],
+                        'CreatedAt' => $request['ModifiedAt']
+                    ]);
+                } else {
+                    if (isset($language['IsDeleted'])) {
+                        if ($language['IsDeleted']) {
+                            Language::where('Id', $language['Id'])->update([
+                                'Name' => $language['Name'],
+                                'Level' => $language['Level'],
+                                'Modified_By' =>  $request['Modified_By'],
+                                'ModifiedAt' => $request['ModifiedAt']
+                            ]);
+                        } else {
+                            Language::where('Id', $language['Id'])->delete();
+                        }
+                    }
+                }
+            }
+
+            // Create contacts
+            $contacts = $request['contact'];
+
+            // Log::info($contact);
+            Contact::where('Resume_Id', $resume['Id'])->update([
+                'Phone' => $contacts['Phone'],
+                'Website' => $contacts['Website'],
+                'Twitter' => $contacts['Twitter'],
+                'Facebook' => $contacts['Facebook'],
+                'Instagram' => $contacts['Instagram'],
+                'Twitter' => $contacts['Twitter'],
+                'LinkedIn' => $contacts['LinkedIn'],
+                'Modified_By' =>  $request['Modified_By'],
+                'ModifiedAt' => $request['ModifiedAt']
+            ]);
+
+            DB::commit();
+
+            return ReturnBase::JustMessage('Resume has been updated successfully', Response::HTTP_OK);
         } catch (\Exception $exp) {
             DB::rollBack();
             return ReturnBase::InternalServerError($exp);
