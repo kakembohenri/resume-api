@@ -9,11 +9,9 @@ use App\Models\Language;
 use App\Models\Resume;
 use App\Models\Skills;
 use App\Models\WorkHistory;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -246,7 +244,6 @@ class ResumeController extends Controller
             // Create contacts
             $contacts = $request['contact'];
 
-            // Log::info($contact);
             Contact::create([
                 'Resume_Id' => $resume['Id'],
                 'Phone' => $contacts['Phone'],
@@ -618,8 +615,6 @@ class ResumeController extends Controller
                 }
             }
 
-            Log::info($request['skills']);
-
             // Create Skills
             foreach ($request['skills'] as $skill) {
                 // if skill has no Id create it
@@ -678,7 +673,6 @@ class ResumeController extends Controller
             // Create contacts
             $contacts = $request['contact'];
 
-            // Log::info($contact);
             Contact::where('Resume_Id', $resume['Id'])->update([
                 'Phone' => $contacts['Phone'],
                 'Website' => $contacts['Website'],
