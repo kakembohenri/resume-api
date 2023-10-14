@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ResumeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -62,4 +63,17 @@ Route::controller(ResumeController::class)->group(function () {
     Route::get("/resumes/access-code/{access_code}", "GetByAccessCode");
     // Verify access code
     Route::post("/resumes/access-code/{access_code}", "VerifyAccessCode");
+});
+
+/** PAYMENT CONTROLLER
+ * 
+ */
+
+Route::controller(PaymentController::class)->group(function () {
+    Route::middleware(['jwt.verify'])->group(function () {
+        // Get flutterwave redirect link
+        Route::post("/payments", "MakePayment");
+        // Confirm payments
+        Route::post("/payments/confirm", "ConfirmPayment");
+    });
 });

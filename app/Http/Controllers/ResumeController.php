@@ -391,7 +391,6 @@ class ResumeController extends Controller
                 'contacts_email' =>  $resume->user['Email'],
             ];
 
-
             return ReturnBase::Object('Success', (object)$result, 200);
         } catch (\Exception $exp) {
             DB::rollBack();
@@ -416,28 +415,57 @@ class ResumeController extends Controller
                 return ReturnBase::Error('Resume does not exist', Response::HTTP_BAD_REQUEST);
             }
 
-            $customClaim = [
-                'isGuest' => true,
-                'accessCode' => $refererCode,
-                'iss' => 'hey',
-                'iat' => strtotime("now"),
-                'nbf' => strtotime("now"),
-                'sub' => 'hey',
-                'jti' => Str::random(64),
+            // $customClaim = [
+            //     'isGuest' => true,
+            //     'accessCode' => $refererCode,
+            //     'iss' => 'hey',
+            //     'iat' => strtotime("now"),
+            //     'nbf' => strtotime("now"),
+            //     'sub' => 'hey',
+            //     'jti' => Str::random(64),
+            // ];
+
+            // $factory = JWTFactory::customClaims($customClaim);
+
+            // $payload = $factory->make();
+
+            // $token = JWTAuth::encode($payload);
+
+            $avatar = $this->RetrieveFile($resume->AvatarPath);
+
+            $contacts = $resume->contacts;
+
+            $contacts['Email'] = $resume->user['Email'];
+
+            $result = [
+                'personal_details' => [
+                    'Avatar' => $avatar,
+                    "FirstName" => $resume['FirstName'],
+                    "MiddleName" => $resume['MiddleName'],
+                    "LastName" => $resume['LastName'],
+                    "DateOfBirth" => $resume['DateOfBirth'],
+                    "Gender" => $resume['Gender'],
+                    "Nationality" => $resume['Nationality'],
+                    "Bio" => $resume['Bio'],
+                    "Headline" => $resume['Headline']
+                ],
+                'address' => [
+                    "CountryOfResidence" => $resume['CountryOfResidence'],
+                    "City" => $resume['City'],
+                    "PostalCode" => $resume['PostalCode']
+                ],
+                'education' => $resume->education,
+                'work_history' => $resume->work_history,
+                'languages' => $resume->languages,
+                'skills' => $resume->skills,
+                'contact' => $contacts,
+                'contacts_email' =>  $resume->user['Email'],
             ];
 
-            $factory = JWTFactory::customClaims($customClaim);
-
-            $payload = $factory->make();
-
-            $token = JWTAuth::encode($payload);
-
             return ReturnBase::Object(
-                'Success',
-                (object)[
-                    'token' => (string)$token
-                ],
-                200
+                "Ok",
+                (object)$result,
+                Response::HTTP_OK
             );
         } catch (\Exception $exp) {
             DB::rollBack();

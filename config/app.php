@@ -177,6 +177,7 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
+        KingFlamez\Rave\RaveServiceProvider::class,
     ],
 
     /*
@@ -194,6 +195,7 @@ return [
         // ...
         'JWTAuth' => Tymon\JWTAuth\Facades\JWTAuth::class,
         'JWTFactory' => Tymon\JWTAuth\Facades\JWTFactory::class,
+        'Rave' => KingFlamez\Rave\Facades\Rave::class,
     ])->toArray(),
 
 ];
