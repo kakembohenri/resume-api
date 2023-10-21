@@ -114,19 +114,19 @@ class PaymentController extends Controller
                 Log::info(['data' => $data]);
 
                 // Create payment
-                // Payment::create([
-                //     'User_Id' => auth()->user()->Id,
-                //     'Amount' => $data['amount'],
-                //     'StartTime' => $request->start_time,
-                //     'CreatedAt' => date('Y-m-d H:i:s', time()),
-                // ]);
+                Payment::create([
+                    'User_Id' => auth()->user()->Id,
+                    'Amount' => $data['amount'],
+                    'StartTime' => $request->start_time,
+                    'CreatedAt' => date('Y-m-d H:i:s', time()),
+                ]);
 
-                // $code = Str::random(64);
+                $code = Str::random(64);
 
-                // // Include AccessCode
-                // Resume::where('User_Id', auth()->user()->Id)->update([
-                //     'RefererCode' =>  $code
-                // ]);
+                // Include AccessCode
+                Resume::where('User_Id', auth()->user()->Id)->update([
+                    'RefererCode' =>  $code
+                ]);
 
                 return ReturnBase::JustMessage('Payment is successful', Response::HTTP_CREATED);
             } elseif ($status ==  'cancelled') {
