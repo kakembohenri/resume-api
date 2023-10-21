@@ -169,8 +169,6 @@ class ResumeController extends Controller
 
             DB::beginTransaction();
 
-            $code = Str::random(64);
-
             $resume = Resume::create([
                 'User_Id' => auth()->user()->Id,
                 'AvatarPath' => $avatarPath,
@@ -185,7 +183,6 @@ class ResumeController extends Controller
                 'CountryOfResidence' => $request['address']['CountryOfResidence'],
                 'City' => $request['address']['City'],
                 'PostalCode' => $request['address']['PostalCode'],
-                'RefererCode' => $code,
                 'Created_By' =>  $request['Created_By'],
                 'CreatedAt' => $request['CreatedAt']
             ]);
@@ -315,6 +312,7 @@ class ResumeController extends Controller
 
             $result = [
                 'personal_details' => [
+                    "UserId" => $resume['User_Id'],
                     'Avatar' => $resume['Avatar'],
                     "FirstName" => $resume['FirstName'],
                     "MiddleName" => $resume['MiddleName'],
@@ -406,30 +404,24 @@ class ResumeController extends Controller
      * - check if resume with that code exists
      * 
      */
-    public function VerifyAccessCode($refererCode)
+    public function VerifyAccessCode(Request $request)
     {
         try {
-            $resume = Resume::where('RefererCode', $refererCode)->first();
+
+            $validator = Validator::make($request->all(), [
+                'user_id' => 'required|exists:users,Id',
+                'access_code' => 'required|string'
+            ]);
+
+            if ($validator->fails()) {
+                return ReturnBase::HandleValidationErrors($validator);
+            }
+
+            $resume = Resume::where('User_Id', $request->user_id)->where('RefererCode', $request->access_code)->first();
 
             if ($resume == null) {
                 return ReturnBase::Error('Resume does not exist', Response::HTTP_BAD_REQUEST);
             }
-
-            // $customClaim = [
-            //     'isGuest' => true,
-            //     'accessCode' => $refererCode,
-            //     'iss' => 'hey',
-            //     'iat' => strtotime("now"),
-            //     'nbf' => strtotime("now"),
-            //     'sub' => 'hey',
-            //     'jti' => Str::random(64),
-            // ];
-
-            // $factory = JWTFactory::customClaims($customClaim);
-
-            // $payload = $factory->make();
-
-            // $token = JWTAuth::encode($payload);
 
             $avatar = $this->RetrieveFile($resume->AvatarPath);
 

@@ -55,14 +55,13 @@ Route::controller(ResumeController::class)->group(function () {
         Route::get("/resumes", "GetMyResume");
         // Update Resume
         Route::put("/resumes", "Update");
-
         // Delete
         Route::delete("/resumes", "Delete");
     });
     // Get by access code / referer code
     Route::get("/resumes/access-code/{access_code}", "GetByAccessCode");
     // Verify access code
-    Route::post("/resumes/access-code/{access_code}", "VerifyAccessCode");
+    Route::post("/resumes/access-code/verify", "VerifyAccessCode");
 });
 
 /** PAYMENT CONTROLLER
