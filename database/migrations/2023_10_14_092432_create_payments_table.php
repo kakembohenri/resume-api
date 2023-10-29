@@ -17,7 +17,6 @@ return new class extends Migration
             $table->bigIncrements('Id');
             $table->foreignId('User_Id')->constrained('users')->cascadeOnDelete();
             $table->decimal('Amount', 20, 2);
-            $table->timestamp('StartTime');
             $table->timestamp('CreatedAt')->nullable();
         });
     }

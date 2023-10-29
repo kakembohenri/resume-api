@@ -15,7 +15,6 @@ class Payment extends Model
     protected $fillable = [
         "User_Id",
         "Amount",
-        "StartTime",
         "Level",
         'CreatedAt',
     ];

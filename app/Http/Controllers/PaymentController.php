@@ -27,17 +27,9 @@ class PaymentController extends Controller
      * - send resp to backend
      */
 
-    public function MakePayment(Request $request)
+    public function MakePayment()
     {
         try {
-
-            $validator = Validator::make($request->all(), [
-                'start_time' => 'required|date|after:today'
-            ]);
-
-            if ($validator->fails()) {
-                return ReturnBase::HandleValidationErrors($validator);
-            }
 
             $reference = Flutterwave::generateReference();
 
@@ -47,18 +39,15 @@ class PaymentController extends Controller
                 'email' => auth()->user()->Email,
                 'tx_ref' => $reference,
                 'currency' => "UGX",
-                'redirect_url' => env('FLW_CALLBACK_URL') . auth()->user()->Id . "/" . $request->start_time . "/",
+                'redirect_url' => env('FLW_CALLBACK_URL') . auth()->user()->Id . "/",
                 'customer' => [
                     "user_id" => auth()->user()->Id,
                     'email' => auth()->user()->Email,
-                    "phone_number" => $request->phone_number,
                     "name" => auth()->user()->Name,
-                    "start_time" => $request->start_time
                 ],
-
                 "customizations" => [
                     "title" => 'Make payment',
-                    "description" => ''
+                    "description" => 'Payment for access to CV'
                 ]
             ];
 
@@ -93,7 +82,6 @@ class PaymentController extends Controller
         try {
 
             $validator = Validator::make($request->all(), [
-                'start_time' => 'required|date|after:today',
                 'params' => 'required|string'
             ]);
 
@@ -106,18 +94,14 @@ class PaymentController extends Controller
 
             //if payment is successful
             if ($status == 'successful') {
-
                 // $transactionID = Flutterwave::getTransactionIDFromCallback();
                 $transactionID = $queryArray['transaction_id'];
                 $data = Flutterwave::verifyTransaction($transactionID);
-
-                Log::info(['data' => $data]);
-
+                $amount = $data['data']['amount'];
                 // Create payment
                 Payment::create([
                     'User_Id' => auth()->user()->Id,
-                    'Amount' => $data['amount'],
-                    'StartTime' => $request->start_time,
+                    'Amount' => $amount,
                     'CreatedAt' => date('Y-m-d H:i:s', time()),
                 ]);
 
